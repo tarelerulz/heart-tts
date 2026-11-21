@@ -25,7 +25,7 @@ and mixes with other audio (e.g. a browser), falling back to ALSA `aplay`.
 ## Install / use
 
 ```sh
-sudo apt install ./heart-tts_0.1.0_arm64.deb
+sudo apt install ./heart-tts_0.1.1_arm64.deb
 read-aloud                 # or the "Read Aloud" app icon
 heart-say "hello world"    # or highlight text and run read-aloud
 heart-tts-doctor           # check the install
@@ -45,6 +45,18 @@ dpkg-buildpackage -us -uc -b
 Build host needs: `dpkg-dev debhelper` (`sudo apt install build-essential debhelper`).
 The payload is prebuilt (a native aarch64 engine binary + GGUF model data), so
 there is nothing to compile.
+
+## Speed (auto-selected per voice + hardware)
+
+The driver picks the fastest engine it can for each voice:
+
+- **heart-nano** → **`hn-fast`**, a hand-written CPU engine (~2× faster than the
+  stock path, byte-identical audio). If a `hn-fast-gpu` binary and a V3D GPU are
+  present it uses that instead; otherwise plain CPU. No GPU binary is shipped (it
+  needs a custom V3D Vulkan driver), but the hook is there.
+- **heart** → the audio.cpp engine.
+
+`heart-tts-doctor` prints which engine each voice will use.
 
 ## Voices / models
 

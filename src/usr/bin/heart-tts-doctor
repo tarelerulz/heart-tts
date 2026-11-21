@@ -15,6 +15,16 @@ for m in sanoTTS-heart-GGUF/heart-f32.gguf sanoTTS-heart-nano-GGUF/heart-nano-f3
   if [ -f "$PREFIX/models/$m" ]; then ok "model: $m"; else bad "model missing: $m"; fi
 done
 
+echo "Engines (auto-selected per voice + hardware)"
+if [ -x "$PREFIX/build/bin/hn-fast-gpu" ] && grep -qil v3d /sys/class/drm/*/device/uevent 2>/dev/null; then
+  ok "heart-nano -> hn-fast-gpu (V3D GPU)"
+elif [ -x "$PREFIX/build/bin/hn-fast" ]; then
+  ok "heart-nano -> hn-fast (fast hand-written CPU path)"
+else
+  warn "heart-nano -> audio.cpp (slower; hn-fast not installed)"
+fi
+ok "heart -> audio.cpp engine"
+
 echo "Runtime"
 command -v python3 >/dev/null 2>&1 && ok "python3" || bad "python3 missing"
 python3 -c "import numpy" 2>/dev/null && ok "python3-numpy" || bad "python3-numpy missing  -> sudo apt install python3-numpy"

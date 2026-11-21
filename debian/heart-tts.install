@@ -1,4 +1,5 @@
 upstream/build/bin/audiocpp_cli                opt/heart-tts/build/bin/
+upstream/build/bin/hn-fast                     opt/heart-tts/build/bin/
 upstream/read_heart.py                         opt/heart-tts/
 upstream/read.py                               opt/heart-tts/
 upstream/models                                opt/heart-tts/

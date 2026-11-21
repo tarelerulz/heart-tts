@@ -1,3 +1,16 @@
+heart-tts (0.1.1) unstable; urgency=medium
+
+  * Faster heart-nano: bundle the hand-written "hn-fast" CPU engine and auto-select
+    it for the heart-nano voice (~2x faster than the audio.cpp path, byte-identical
+    audio). The "heart" voice still uses the audio.cpp engine.
+  * read_heart.py now picks the fastest available engine per voice and hardware: a
+    hn-fast-gpu (V3D GPU) binary if present, else hn-fast (CPU), else audio.cpp.
+    No GPU binary is shipped (it needs a custom V3D Vulkan driver), but the hook is
+    in place if one is dropped in.
+  * heart-tts-doctor reports which engine each voice will use.
+
+ -- Tarel <334372633+tarelerulz@users.noreply.github.com>  Sat, 21 Nov 2026 02:30:00 +0000
+
 heart-tts (0.1.0) unstable; urgency=medium
 
   * Initial release. "Read Aloud" text-to-speech for the Raspberry Pi, packaged

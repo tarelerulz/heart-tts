@@ -21,6 +21,14 @@ cp "$ACPP/build/bin/audiocpp_cli" "$UP/build/bin/audiocpp_cli"
 cp "$ACPP/read_heart.py"          "$UP/read_heart.py"
 cp "$READPY"                      "$UP/read.py"
 
+# Hand-written heart-nano CPU engine (~2x faster than audio.cpp for heart-nano).
+# Auto-selected by read_heart.py for the heart-nano voice when present; "heart"
+# always uses audiocpp_cli. Optional: drop a hn-fast-gpu beside it and read_heart
+# will prefer it on a V3D GPU.
+[ -x "$ACPP/build/bin/hn-fast" ] && cp "$ACPP/build/bin/hn-fast" "$UP/build/bin/hn-fast" \
+    || echo "WARNING: hn-fast not found at $ACPP/build/bin/hn-fast (heart-nano will use the slower audio.cpp path)"
+[ -x "$ACPP/build/bin/hn-fast-gpu" ] && cp "$ACPP/build/bin/hn-fast-gpu" "$UP/build/bin/hn-fast-gpu" || true
+
 # Voice models (small; bundled). heart = preferred, heart-nano = faster/smaller.
 for m in sanoTTS-heart-GGUF sanoTTS-heart-nano-GGUF; do
     mkdir -p "$UP/models/$m"
