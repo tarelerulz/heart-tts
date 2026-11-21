@@ -8,3 +8,5 @@ debian/heart-tts/
 *.buildinfo
 *.changes
 *.bak*
+debian/*.debhelper.log
+debian/*.debhelper
