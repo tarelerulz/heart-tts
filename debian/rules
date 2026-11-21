@@ -25,4 +25,6 @@ override_dh_fixperms:
 	dh_fixperms
 	chmod 0755 debian/heart-tts/opt/heart-tts/build/bin/audiocpp_cli
 	chmod 0755 debian/heart-tts/opt/heart-tts/build/bin/hn-fast
+	chmod 0755 debian/heart-tts/opt/heart-tts/build/bin/audiocpp_server
+	chmod 0755 debian/heart-tts/opt/heart-tts/build/bin/heart-finish
 	chmod 0755 debian/heart-tts/opt/heart-tts/read_worker.sh

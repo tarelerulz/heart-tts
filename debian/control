@@ -21,6 +21,7 @@ Depends: ${misc:Depends},
          libgomp1,
          libstdc++6,
          pipewire-bin | pipewire
+Suggests: libvulkan1, mesa-vulkan-drivers
 Description: Fast on-device "Read Aloud" text-to-speech (sanoTTS heart voices)
  A small Wayland "Read Aloud" window: highlight text in any app, click READ, and
  it is spoken through your default audio output. It uses the native audio.cpp

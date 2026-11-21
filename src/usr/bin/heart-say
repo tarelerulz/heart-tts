@@ -4,8 +4,11 @@
 #   echo ... | ...                        # (not stdin; pass words as arguments)
 #   heart-say                             # with no words, speaks the clipboard/selection
 # Options via environment:  HEART_VOICE=heart|heart-nano   HEART_SPEED=1.0
+#   HEART_ENGINE=auto|gpu|cpu-neon   (or:  heart-say --engine gpu Hello)
+#     auto = fastest for this machine, gpu = Raspberry Pi graphics chip (heart-nano only), cpu-neon = CPU
 PREFIX=/opt/heart-tts
 export WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}"
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+if [ "$1" = "--engine" ] && [ -n "$2" ]; then HEART_ENGINE="$2"; export HEART_ENGINE; shift 2; fi
 export HEART_TEXT="$*"
 exec python3 "$PREFIX/read_heart.py" "${HEART_VOICE:-heart}" "${HEART_SPEED:-1.0}"

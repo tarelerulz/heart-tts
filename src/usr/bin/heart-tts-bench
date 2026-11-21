@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+"""heart-tts-bench: how long does heart-tts take to make speech of a given length?
+
+  heart-tts-bench                 both voices, 4 clip lengths
+  heart-tts-bench heart           one voice
+  heart-tts-bench --quick         fewer lengths
+
+Columns: audio length made, then time (ms, median of 3) for
+  process = engine started fresh for every sentence (old behaviour)
+  kept    = engine already loaded (what Read Aloud uses after the first sentence)
+  full    = kept engine + gain/gate/consonant finish (ready to stream; the leveler runs in one
+            long-lived ffmpeg alongside, ~25 ms to first byte)
+and x-real-time = audio seconds / kept seconds.
+"""
+import importlib.util, os, statistics, sys, tempfile, time, wave
+
+PREFIX = os.environ.get("HEART_PREFIX", "/opt/heart-tts")
+BASE = "The quick brown fox jumps over the lazy dog while the morning sun climbs slowly above the quiet hills."
+CLIPS = [("1 clause", BASE[:70].rsplit(" ", 1)[0] + "."), ("1 sentence", BASE),
+         ("3 sentences", " ".join([BASE] * 3)), ("6 sentences", " ".join([BASE] * 6))]
+
+
+def load(voice):
+    sys.argv = ["read_heart.py", voice, "1.0"]
+    spec = importlib.util.spec_from_file_location("read_heart_" + voice.replace("-", "_"),
+                                                  os.path.join(PREFIX, "read_heart.py"))
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+def med(fn, n=3):
+    fn()                                    # warm-up (also starts the kept engine)
+    t = []
+    for _ in range(n):
+        t0 = time.perf_counter(); fn(); t.append((time.perf_counter() - t0) * 1000)
+    return statistics.median(t)
+
+
+def seconds(path):
+    with wave.open(path) as w:
+        return w.getnframes() / w.getframerate()
+
+
+def main():
+    args = [a for a in sys.argv[1:] if not a.startswith("-")]
+    voices = args or ["heart", "heart-nano"]
+    clips = CLIPS[:2] + CLIPS[3:] if "--quick" in sys.argv else CLIPS
+    tmp = tempfile.mkdtemp(prefix="heart-bench-")
+    print("%-11s %-12s %8s %10s %9s %9s %9s" % ("voice", "text", "audio", "process", "kept", "full", "x real"))
+    for v in voices:
+        m = load(v)
+        raw = os.path.join(tmp, "raw.wav")
+        print("# %s -> %s" % (v, os.path.basename(m.engine_cmd(v, "x", raw)[0])
+                              + (" + kept-loaded server" if m.SERVE_ON else " (HEART_SERVE=off)")))
+        for name, text in clips:
+            m.SERVE_ON = False
+            if not m.synth_raw(text, raw):
+                print("%-11s %-12s engine failed" % (v, name)); continue
+            audio = seconds(raw)
+            proc = med(lambda: m.synth_raw(text, raw))
+            m.SERVE_ON = True
+            kept = med(lambda: m.synth_raw(text, raw))
+            full = med(lambda: m.chunk_pcm(text, 0, tmp))
+            print("%-11s %-12s %6.1f s %7.0f ms %6.0f ms %6.0f ms %7.0fx"
+                  % (v, name, audio, proc, kept, full, audio * 1000 / kept))
+    print("(engine on 3 cores; playback not included)")
+
+
+main()

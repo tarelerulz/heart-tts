@@ -1,3 +1,32 @@
+heart-tts (0.1.2) unstable; urgency=medium
+
+  * Ship the audio.cpp build with the NEON sanoTTS decoder as audiocpp_cli and enable
+    it (sanotts.cpu_decoder=neon). Full "heart" voice: ~1.5x faster per sentence
+    (376 -> 249 ms measured), same audio (max 1 LSB difference). HEART_NEON=off
+    returns to the old decoder.
+  * New command heart-tts-bench: audio length made vs processing time (per-process, kept-loaded,
+    and full path incl. leveler), x-real-time.
+  * Faster time-to-first-sound: numpy is imported lazily (~270 ms saved at start), gain/gate/
+    consonant finish is native (hn-fast --finish for heart-nano, bundled heart-finish for heart),
+    and the ffmpeg leveler is ONE long-lived process piped into pw-play instead of one ffmpeg per
+    chunk. Falls back to the old per-chunk path if streaming fails. HEART_STREAM=off,
+    HEART_NATIVE_FINISH=off restore the old behaviour.
+  * Kept-loaded engines: heart-nano via "hn-fast --serve" (exits after 30 min idle),
+    heart via a bundled audiocpp_server started on demand (idle watchdog, port 8098).
+    Skips ~65-100 ms of process start / model load per sentence. HEART_SERVE=off
+    returns to one process per sentence; any server failure falls back automatically.
+  * Engine switch: auto / gpu / cpu-neon. Set HEART_ENGINE=..., the "engine" menu in the Read Aloud
+    window (remembered in ~/.config/heart-tts/engine), or "heart-say --engine gpu ...".
+    cpu-neon = the CPU's ARM NEON vector code (every Pi); gpu = heart-nano's decoder on the Pi
+    graphics chip (V3D; needs less CPU, not faster; heart-nano only, falls back to cpu-neon if the GPU
+    files, driver or access are missing); auto = whatever is fastest here (today cpu-neon).
+    Bundles the GPU files in /opt/heart-tts/gpu (libhngpu.so, shaders, plan); uses the system Vulkan
+    driver. heart-tts-doctor reports which engines are available and why not. The full "heart" voice
+    has no GPU engine. (An int8 dot-product engine was tested and rejected: slower, slightly different
+    sound. hn-fast still accepts --engine cpu-dotprod, experimental, not selectable here.)
+
+ -- Tarel <334372633+tarelerulz@users.noreply.github.com>  Sat, 21 Nov 2026 03:40:00 +0000
+
 heart-tts (0.1.1) unstable; urgency=medium
 
   * Faster heart-nano: bundle the hand-written "hn-fast" CPU engine and auto-select

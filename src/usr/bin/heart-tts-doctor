@@ -15,15 +15,26 @@ for m in sanoTTS-heart-GGUF/heart-f32.gguf sanoTTS-heart-nano-GGUF/heart-nano-f3
   if [ -f "$PREFIX/models/$m" ]; then ok "model: $m"; else bad "model missing: $m"; fi
 done
 
-echo "Engines (auto-selected per voice + hardware)"
-if [ -x "$PREFIX/build/bin/hn-fast-gpu" ] && grep -qil v3d /sys/class/drm/*/device/uevent 2>/dev/null; then
-  ok "heart-nano -> hn-fast-gpu (V3D GPU)"
-elif [ -x "$PREFIX/build/bin/hn-fast" ]; then
-  ok "heart-nano -> hn-fast (fast hand-written CPU path)"
-else
-  warn "heart-nano -> audio.cpp (slower; hn-fast not installed)"
-fi
-ok "heart -> audio.cpp engine"
+echo "Engines (choose with HEART_ENGINE=auto|gpu|cpu-neon, or the engine menu in Read Aloud)"
+want="${HEART_ENGINE:-}"
+[ -z "$want" ] && [ -f "$HOME/.config/heart-tts/engine" ] && want=$(cat "$HOME/.config/heart-tts/engine")
+[ -z "$want" ] && want=auto
+echo "  requested engine: $want"
+if [ -x "$PREFIX/build/bin/hn-fast" ]; then ok "cpu-neon: heart-nano -> hn-fast (hand-written CPU path)"; else warn "cpu-neon: hn-fast missing, heart-nano falls back to audio.cpp (slower)"; fi
+ok "cpu-neon: heart -> audio.cpp engine (NEON decoder; heart has no GPU engine)"
+GPUWHY=""
+grep -qil v3d /sys/class/drm/*/device/uevent 2>/dev/null || GPUWHY="no V3D GPU found"
+[ -z "$GPUWHY" ] && for f in hn-gpu-plan.bin libhngpu.so shaders; do [ -e "$PREFIX/gpu/$f" ] || GPUWHY="GPU files missing ($f)"; done
+[ -z "$GPUWHY" ] && ! ls /dev/dri/renderD* >/dev/null 2>&1 && GPUWHY="no /dev/dri/renderD* node"
+[ -z "$GPUWHY" ] && { for n in /dev/dri/renderD*; do [ -r "$n" ] && [ -w "$n" ] && GPUOK=1; done; [ -z "$GPUOK" ] && GPUWHY="no access to /dev/dri/renderD* (add yourself to the 'render' group, then log in again)"; }
+[ -z "$GPUWHY" ] && ! ldconfig -p 2>/dev/null | grep -q "libvulkan.so.1" && GPUWHY="libvulkan1 missing  -> sudo apt install libvulkan1 mesa-vulkan-drivers"
+if [ -z "$GPUWHY" ]; then ok "gpu: available (heart-nano decoder on the V3D GPU; needs less CPU, not faster)"; else warn "gpu: not available - $GPUWHY (heart-nano stays on cpu-neon)"; fi
+case "$want" in
+  auto) ok "auto -> cpu-neon (fastest here)";;
+  cpu-neon) ok "selected: cpu-neon";;
+  gpu) if [ -z "$GPUWHY" ]; then ok "selected: gpu (heart-nano; heart still uses cpu-neon)"; else warn "selected: gpu but unavailable, will use cpu-neon"; fi;;
+  *) warn "unknown HEART_ENGINE '$want' (use auto, gpu or cpu-neon); using auto";;
+esac
 
 echo "Runtime"
 command -v python3 >/dev/null 2>&1 && ok "python3" || bad "python3 missing"

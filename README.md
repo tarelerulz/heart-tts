@@ -76,3 +76,19 @@ which is redistributable under GPL-3 as part of this package. See
 `python3`, `python3-numpy`, `python3-tk`, `libespeak-ng1`, `espeak-ng-data`,
 `ffmpeg`, `wl-clipboard`, `alsa-utils`, `pipewire-bin` (for `pw-play`),
 `libgomp1`, `libstdc++6` — all declared in `debian/control`.
+
+
+## Engines: auto / gpu / cpu-neon
+
+Choose where heart-nano runs with the **engine** menu in the Read Aloud window (remembered in
+`~/.config/heart-tts/engine`), `HEART_ENGINE=...`, or `heart-say --engine gpu "Hello"`.
+
+| name | what it is | when to use |
+|---|---|---|
+| `auto` | whatever is fastest on this machine (today: `cpu-neon`) | default |
+| `cpu-neon` | the CPU's ARM NEON vector code, works on every Pi | always available |
+| `gpu` | heart-nano's decoder on the Pi's graphics chip (V3D, via Vulkan + hand-written QPU kernels) | to keep the CPU free; not faster |
+
+The full "heart" voice only has the CPU engine. If the GPU files, driver or `/dev/dri/renderD*`
+access (group `render`) are missing, or the GPU fails to start, `gpu` quietly falls back to `cpu-neon`.
+`heart-tts-doctor` shows what is available and why.

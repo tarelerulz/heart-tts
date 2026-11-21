@@ -29,6 +29,18 @@ cp "$READPY"                      "$UP/read.py"
     || echo "WARNING: hn-fast not found at $ACPP/build/bin/hn-fast (heart-nano will use the slower audio.cpp path)"
 [ -x "$ACPP/build/bin/hn-fast-gpu" ] && cp "$ACPP/build/bin/hn-fast-gpu" "$UP/build/bin/hn-fast-gpu" || true
 
+# GPU engine files for hn-fast --engine gpu (staged by ~/bin/build-pios-hn-fast.sh): libhngpu.so (V3D runner),
+# shaders/ (prebuilt SPIR-V + QPU kernels), hn-gpu-plan.bin (the decoder's step list + weights). Optional: without
+# them the "gpu" engine reports itself unavailable and heart-nano stays on cpu-neon.
+GPUSRC="${HEART_GPUSRC:-$HOME/src/heart-nano-gpu/gpu}"
+mkdir -p "$UP/gpu"
+if [ -f "$GPUSRC/libhngpu.so" ] && [ -f "$GPUSRC/hn-gpu-plan.bin" ] && [ -d "$GPUSRC/shaders" ]; then
+    cp "$GPUSRC/libhngpu.so" "$GPUSRC/hn-gpu-plan.bin" "$UP/gpu/"
+    cp -r "$GPUSRC/shaders" "$UP/gpu/shaders"
+else
+    echo "WARNING: GPU files not found in $GPUSRC (run build-pios-hn-fast.sh); the gpu engine will be unavailable"
+fi
+
 # Voice models (small; bundled). heart = preferred, heart-nano = faster/smaller.
 for m in sanoTTS-heart-GGUF sanoTTS-heart-nano-GGUF; do
     mkdir -p "$UP/models/$m"
@@ -36,6 +48,12 @@ for m in sanoTTS-heart-GGUF sanoTTS-heart-nano-GGUF; do
     cp "$ACPP/models/$m"/config.json   "$UP/models/$m/"
 done
 
+# Kept-loaded Heart server (NEON decoder build); read_heart.py starts it on demand.
+[ -x "$ACPP/build/bin/audiocpp_server" ] && cp "$ACPP/build/bin/audiocpp_server" "$UP/build/bin/audiocpp_server" \
+    || echo "WARNING: audiocpp_server not found; heart will start a process per sentence"
+# C++ finish (gain/gate/consonant lift), built from src/heart-finish.cpp by the root build script.
+[ -x "$HERE/src/heart-finish" ] && cp "$HERE/src/heart-finish" "$UP/build/bin/heart-finish" \
+    || echo "WARNING: src/heart-finish not built; the finish falls back to numpy"
 chmod +x "$UP/build/bin/audiocpp_cli"
 
 echo "Assembled upstream payload in $UP"
