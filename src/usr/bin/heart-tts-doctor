@@ -1,0 +1,39 @@
+#!/bin/sh
+# Quick health check for heart-tts: engine, models, runtime deps, and a 1-line
+# synthesis self-test. Exit 1 if speech cannot be produced.
+PREFIX=/opt/heart-tts
+ok(){   printf '  [ ok ] %s\n' "$1"; }
+bad(){  printf '  [FAIL] %s\n' "$1"; FAIL=$((FAIL+1)); }
+warn(){ printf '  [warn] %s\n' "$1"; WARN=$((WARN+1)); }
+FAIL=0; WARN=0
+
+echo "Engine"
+if [ -x "$PREFIX/build/bin/audiocpp_cli" ]; then ok "engine present: $PREFIX/build/bin/audiocpp_cli"; else bad "engine missing: $PREFIX/build/bin/audiocpp_cli"; fi
+
+echo "Voice models"
+for m in sanoTTS-heart-GGUF/heart-f32.gguf sanoTTS-heart-nano-GGUF/heart-nano-f32.gguf; do
+  if [ -f "$PREFIX/models/$m" ]; then ok "model: $m"; else bad "model missing: $m"; fi
+done
+
+echo "Runtime"
+command -v python3 >/dev/null 2>&1 && ok "python3" || bad "python3 missing"
+python3 -c "import numpy" 2>/dev/null && ok "python3-numpy" || bad "python3-numpy missing  -> sudo apt install python3-numpy"
+python3 -c "import tkinter" 2>/dev/null && ok "python3-tk (Read Aloud window)" || warn "python3-tk missing (CLI heart-say still works)  -> sudo apt install python3-tk"
+[ -f /lib/aarch64-linux-gnu/libespeak-ng.so.1 ] && ok "libespeak-ng" || bad "libespeak-ng missing  -> sudo apt install libespeak-ng1"
+[ -d /usr/lib/aarch64-linux-gnu/espeak-ng-data ] && ok "espeak-ng-data" || bad "espeak-ng-data missing  -> sudo apt install espeak-ng-data"
+command -v ffmpeg >/dev/null 2>&1 && ok "ffmpeg (clarity leveler + speed)" || bad "ffmpeg missing  -> sudo apt install ffmpeg"
+command -v wl-paste >/dev/null 2>&1 && ok "wl-clipboard (reads highlighted text)" || warn "wl-paste missing  -> sudo apt install wl-clipboard"
+if command -v pw-play >/dev/null 2>&1; then ok "pw-play (PipeWire playback)"; elif command -v aplay >/dev/null 2>&1; then warn "pw-play missing; will use aplay (no mixing with other audio)"; else bad "no pw-play or aplay  -> sudo apt install pipewire-bin (or alsa-utils)"; fi
+
+echo "Self-test (synthesize 'testing' to a temp file)"
+TMP=$(mktemp --suffix=.wav)
+if HEART_TEXT="testing one two three" python3 "$PREFIX/read_heart.py" heart-nano 1.0 >/dev/null 2>&1; then
+  ok "engine produced speech"
+else
+  bad "synthesis self-test failed (run:  HEART_TEXT=hi python3 $PREFIX/read_heart.py heart-nano  to see the error)"
+fi
+rm -f "$TMP"
+
+echo
+if [ "$FAIL" -gt 0 ]; then echo "Result: $FAIL problem(s), $WARN warning(s). Read-aloud will not work until the [FAIL] lines are fixed."; exit 1
+else echo "Result: ready ($WARN warning(s))."; fi

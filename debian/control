@@ -1,0 +1,35 @@
+Source: heart-tts
+Section: sound
+Priority: optional
+Maintainer: Tarel <334372633+tarelerulz@users.noreply.github.com>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.6.2
+Rules-Requires-Root: no
+Homepage: https://github.com/tarelerulz/heart-tts
+
+Package: heart-tts
+Architecture: arm64
+Depends: ${misc:Depends},
+         python3 (>= 3.9),
+         python3-numpy,
+         python3-tk,
+         libespeak-ng1,
+         espeak-ng-data,
+         ffmpeg,
+         wl-clipboard,
+         alsa-utils,
+         libgomp1,
+         libstdc++6,
+         pipewire-bin | pipewire
+Description: Fast on-device "Read Aloud" text-to-speech (sanoTTS heart voices)
+ A small Wayland "Read Aloud" window: highlight text in any app, click READ, and
+ it is spoken through your default audio output. It uses the native audio.cpp
+ sanoTTS engine with the "heart" voice (and the smaller, faster "heart-nano"),
+ which run many times faster than real time on a Raspberry Pi 4 / 400, so speech
+ starts almost immediately. The DSP is tuned for clarity (gain, noise gate,
+ consonant lift, loudness leveler).
+ .
+ Playback goes through PipeWire (pw-play) so it follows your current output and
+ mixes with other audio, falling back to ALSA. Also provides a command-line
+ "heart-say" for speaking text or the clipboard from a terminal, and
+ "heart-tts-doctor" to check the install. The voice models are bundled.

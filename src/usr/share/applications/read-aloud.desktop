@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Read Aloud
+Comment=Speak highlighted text aloud (fast sanoTTS heart voice)
+Exec=read-aloud
+Icon=audio-speakers
+Terminal=false
+Categories=Utility;Accessibility;AudioVideo;
+Keywords=tts;speech;read;aloud;voice;accessibility;

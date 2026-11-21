@@ -1,0 +1,9 @@
+#!/bin/sh
+# Launch the "Read Aloud" window: highlight text in any app, click READ, and it
+# is spoken through your default audio output with the fast sanoTTS heart voice.
+PREFIX=/opt/heart-tts
+export HEART_WORKER="$PREFIX/read_worker.sh"
+# A Wayland session is needed to read the highlighted selection (wl-paste).
+export WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}"
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+exec python3 "$PREFIX/read.py" "$@"

@@ -1,0 +1,11 @@
+#!/bin/sh
+# Speak text aloud from the terminal with the sanoTTS heart voice.
+#   heart-say Hello there                 # speak the given words
+#   echo ... | ...                        # (not stdin; pass words as arguments)
+#   heart-say                             # with no words, speaks the clipboard/selection
+# Options via environment:  HEART_VOICE=heart|heart-nano   HEART_SPEED=1.0
+PREFIX=/opt/heart-tts
+export WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}"
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+export HEART_TEXT="$*"
+exec python3 "$PREFIX/read_heart.py" "${HEART_VOICE:-heart}" "${HEART_SPEED:-1.0}"

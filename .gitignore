@@ -1,0 +1,10 @@
+upstream/
+debian/.debhelper/
+debian/*.substvars
+debian/debhelper-build-stamp
+debian/files
+debian/heart-tts/
+*.deb
+*.buildinfo
+*.changes
+*.bak*

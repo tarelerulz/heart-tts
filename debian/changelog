@@ -1,0 +1,13 @@
+heart-tts (0.1.0) unstable; urgency=medium
+
+  * Initial release. "Read Aloud" text-to-speech for the Raspberry Pi, packaged
+    from the native audio.cpp sanoTTS engine:
+    - read-aloud: a floating Wayland window; highlight text anywhere, click READ.
+    - heart-say: speak text (or the clipboard) aloud from the terminal.
+    - heart-tts-doctor: health check + synthesis self-test.
+  * Bundles the "heart" and "heart-nano" voice models (GPL-3, ampixa/sanoTTS).
+    The audio.cpp engine is Apache-2.0 (ShugoAI LLC).
+  * Playback through PipeWire (pw-play) so it follows the current output device
+    and mixes with other audio, with an ALSA fallback.
+
+ -- Tarel <334372633+tarelerulz@users.noreply.github.com>  Sat, 21 Nov 2026 02:00:00 +0000

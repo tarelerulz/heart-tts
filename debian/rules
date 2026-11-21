@@ -1,0 +1,27 @@
+#!/usr/bin/make -f
+# The payload is prebuilt (a native aarch64 engine binary, Python scripts and
+# GGUF model data), so there is nothing to compile. We only install files and
+# keep the binary untouched.
+
+%:
+	dh $@
+
+override_dh_auto_build:
+override_dh_auto_test:
+override_dh_auto_configure:
+
+# Keep the prebuilt engine binary exactly as shipped (do not strip / rewrite it).
+override_dh_strip:
+override_dh_dwz:
+override_dh_strip_nondeterminism:
+
+# The engine links only standard libs (libstdc++/libgomp/libc); those deps are
+# declared by hand in debian/control, so skip scanning the prebuilt binary.
+override_dh_shlibdeps:
+
+# dh_fixperms would drop +x from files under /opt; keep the engine and worker
+# executable.
+override_dh_fixperms:
+	dh_fixperms
+	chmod 0755 debian/heart-tts/opt/heart-tts/build/bin/audiocpp_cli
+	chmod 0755 debian/heart-tts/opt/heart-tts/read_worker.sh

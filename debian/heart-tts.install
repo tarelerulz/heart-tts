@@ -1,0 +1,9 @@
+upstream/build/bin/audiocpp_cli                opt/heart-tts/build/bin/
+upstream/read_heart.py                         opt/heart-tts/
+upstream/read.py                               opt/heart-tts/
+upstream/models                                opt/heart-tts/
+src/read_worker.sh                             opt/heart-tts/
+src/usr/bin/read-aloud                         usr/bin/
+src/usr/bin/heart-say                          usr/bin/
+src/usr/bin/heart-tts-doctor                   usr/bin/
+src/usr/share/applications/read-aloud.desktop  usr/share/applications/
