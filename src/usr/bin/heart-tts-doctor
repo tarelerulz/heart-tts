@@ -15,7 +15,7 @@ for m in sanoTTS-heart-GGUF/heart-f32.gguf sanoTTS-heart-nano-GGUF/heart-nano-f3
   if [ -f "$PREFIX/models/$m" ]; then ok "model: $m"; else bad "model missing: $m"; fi
 done
 
-echo "Engines (choose with HEART_ENGINE=auto|gpu|cpu-neon, or the engine menu in Read Aloud)"
+echo "Engines (choose with HEART_ENGINE=auto|gpu|cpu-neon|cpu-fp16-pw|cpu-fp16|cpu-dotprod16|cpu-dotprod|cpu-dotprod-fp16, or the engine menu in Read Aloud)"
 want="${HEART_ENGINE:-}"
 [ -z "$want" ] && [ -f "$HOME/.config/heart-tts/engine" ] && want=$(cat "$HOME/.config/heart-tts/engine")
 [ -z "$want" ] && want=auto
@@ -29,11 +29,27 @@ grep -qil v3d /sys/class/drm/*/device/uevent 2>/dev/null || GPUWHY="no V3D GPU f
 [ -z "$GPUWHY" ] && { for n in /dev/dri/renderD*; do [ -r "$n" ] && [ -w "$n" ] && GPUOK=1; done; [ -z "$GPUOK" ] && GPUWHY="no access to /dev/dri/renderD* (add yourself to the 'render' group, then log in again)"; }
 [ -z "$GPUWHY" ] && ! ldconfig -p 2>/dev/null | grep -q "libvulkan.so.1" && GPUWHY="libvulkan1 missing  -> sudo apt install libvulkan1 mesa-vulkan-drivers"
 if [ -z "$GPUWHY" ]; then ok "gpu: available (heart-nano decoder on the V3D GPU; needs less CPU, not faster)"; else warn "gpu: not available - $GPUWHY (heart-nano stays on cpu-neon)"; fi
+FEAT=$(grep -m1 "^Features" /proc/cpuinfo 2>/dev/null)
+HAVE_FP16=""; HAVE_DOT=""
+case "$FEAT" in *asimdhp*) HAVE_FP16=1;; esac
+case "$FEAT" in *asimddp*) HAVE_DOT=1;; esac
+tier() { # name needs-fp16 needs-dotprod note
+  miss=""
+  [ "$2" = 1 ] && [ -z "$HAVE_FP16" ] && miss="fp16"
+  [ "$3" = 1 ] && [ -z "$HAVE_DOT" ] && miss="$miss${miss:+ + }dot-product"
+  if [ -z "$miss" ]; then ok "$1: available (opt-in, not the default; $4)"; else warn "$1: not available - this CPU has no $miss support (Pi 5 / newer phones do); falls back to cpu-neon"; fi
+}
+tier cpu-fp16-pw 1 0 "heart ~1.3x, nano ~1.1x; small accuracy trade"
+tier cpu-fp16 1 0 "heart ~1.5x, nano ~1.15x; small accuracy trade"
+tier cpu-dotprod16 0 1 "heart-nano only, near-lossless, ~1.1x"
+tier cpu-dotprod 0 1 "heart ~1.4x, nano ~1.25x; small accuracy trade"
+tier cpu-dotprod-fp16 1 1 "heart ~1.6x, nano ~1.3x; small accuracy trade"
 case "$want" in
-  auto) ok "auto -> cpu-neon (fastest here)";;
+  auto) ok "auto -> cpu-neon (fastest exact engine here)";;
   cpu-neon) ok "selected: cpu-neon";;
+  cpu-fp16-pw|cpu-fp16|cpu-dotprod16|cpu-dotprod|cpu-dotprod-fp16) ok "selected: $want (falls back to cpu-neon if this CPU lacks the feature)";;
   gpu) if [ -z "$GPUWHY" ]; then ok "selected: gpu (heart-nano; heart still uses cpu-neon)"; else warn "selected: gpu but unavailable, will use cpu-neon"; fi;;
-  *) warn "unknown HEART_ENGINE '$want' (use auto, gpu or cpu-neon); using auto";;
+  *) warn "unknown HEART_ENGINE '$want' (use auto, gpu, cpu-neon or one of the cpu-fp16/cpu-dotprod tiers); using auto";;
 esac
 
 echo "Runtime"

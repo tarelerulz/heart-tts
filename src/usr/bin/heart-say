@@ -6,6 +6,8 @@
 # Options via environment:  HEART_VOICE=heart|heart-nano   HEART_SPEED=1.0
 #   HEART_ENGINE=auto|gpu|cpu-neon   (or:  heart-say --engine gpu Hello)
 #     auto = fastest for this machine, gpu = Raspberry Pi graphics chip (heart-nano only), cpu-neon = CPU
+#     Opt-in faster CPU tiers for CPUs with ARMv8.2 fp16 / dot-product (Pi 5, newer phones; NOT the Pi 400):
+#     cpu-fp16-pw, cpu-fp16, cpu-dotprod16 (heart-nano only), cpu-dotprod, cpu-dotprod-fp16 - see heart-tts-doctor
 PREFIX=/opt/heart-tts
 export WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}"
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"

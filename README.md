@@ -92,3 +92,22 @@ Choose where heart-nano runs with the **engine** menu in the Read Aloud window (
 The full "heart" voice only has the CPU engine. If the GPU files, driver or `/dev/dri/renderD*`
 access (group `render`) are missing, or the GPU fails to start, `gpu` quietly falls back to `cpu-neon`.
 `heart-tts-doctor` shows what is available and why.
+
+### Opt-in faster CPU tiers (0.1.3, Pi 5 and newer phones only)
+
+These use ARMv8.2 half-precision (`fp16`) and int8 dot-product (`dotprod`) instructions. The Pi 400
+(Cortex-A72) has neither, so there they are not offered and everything runs on `cpu-neon`. They are **not
+bit-identical** to `cpu-neon` (a small accuracy trade for speed) and are never the default.
+
+| name | needs | heart | heart-nano |
+|---|---|---|---|
+| `cpu-fp16-pw` | fp16 | 1.17x | 1.13x |
+| `cpu-fp16` | fp16 | 1.26x | 1.15x |
+| `cpu-dotprod16` | dotprod | - (heart-nano only) | 1.09x (near-lossless) |
+| `cpu-dotprod` | dotprod | 1.43x | 1.23x |
+| `cpu-dotprod-fp16` | both | 1.58x | 1.28x |
+
+Whole-sentence speed-up over `cpu-neon`, medians of interleaved runs, medium sentence, one Cortex-A720 core of a
+Pixel 9 (standing in for the Pi 5; **not measured on a real Pi 5**). Listening so far: one blind test on
+heart-nano, medium sentence, found every tier the same as `cpu-neon`; heart and other sentences are not yet
+listened to. The tiers were written by Google's Antigravity agent and re-checked (output and speed) by Claude.

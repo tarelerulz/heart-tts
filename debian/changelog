@@ -1,3 +1,27 @@
+heart-tts (0.1.3) unstable; urgency=medium
+
+  * Faster exact CPU path (cpu-neon, still the default): vectorised silu/gelu/layer-norm, NEON depthwise
+    conv and head transpose, spin barrier instead of futex barriers. Same audio (max 1 LSB difference),
+    ~1.05x on a Cortex-A720, ~9% on the Pi 400 decoder (measured by the author of the patch).
+  * New opt-in faster CPU tiers from Google's Antigravity agent, re-checked by Claude: cpu-fp16-pw,
+    cpu-fp16, cpu-dotprod16 (heart-nano only), cpu-dotprod, cpu-dotprod-fp16. They use ARMv8.2
+    half-precision and int8 dot-product instructions, so they need a Pi 5 or newer phone; on a Pi 400
+    (no such instructions) they are not offered and fall back to cpu-neon. NOT bit-identical to cpu-neon
+    (a small accuracy trade for speed) and not the default. Measured on a Pixel 9 (Cortex-A720) as a
+    stand-in for the Pi 5, medium sentence, 1 core, vs cpu-neon: heart whole sentence 1.17x (fp16-pw) to
+    1.58x (dotprod-fp16); heart-nano 1.09x (dotprod16) to 1.28x (dotprod-fp16). Not tested on a real Pi 5.
+    Listening: one blind test on heart-nano (medium sentence) found all tiers the same as cpu-neon;
+    heart and other sentences not yet listened to.
+  * Each engine gets its own kept-loaded server, so switching engines never talks to the wrong one.
+    Select with HEART_ENGINE=..., heart-say --engine ..., or the Read Aloud engine menu (which only lists
+    tiers this CPU supports); heart-tts-doctor shows availability.
+  * Fix: no audio on PipeWire 1.4.x. The streaming player piped raw PCM into "pw-play ... -", but pw-play
+    treats a pipe as a sound file and aborts with "Format not recognised" unless told it is raw, so every
+    read was silent while still printing PLAY/DONE (the player's stderr was hidden). Add the --raw flag to
+    the pw-play command in read_heart.py. The aplay fallback was unaffected.
+
+ -- Tarel <334372633+tarelerulz@users.noreply.github.com>  Sat, 21 Nov 2026 19:10:00 +0000
+
 heart-tts (0.1.2) unstable; urgency=medium
 
   * Ship the audio.cpp build with the NEON sanoTTS decoder as audiocpp_cli and enable
